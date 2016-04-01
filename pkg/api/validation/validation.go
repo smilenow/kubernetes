@@ -1425,6 +1425,15 @@ func ValidatePodSpec(spec *api.PodSpec, fldPath *field.Path) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("activeDeadlineSeconds"), spec.ActiveDeadlineSeconds, "must be greater than 0"))
 		}
 	}
+
+	if spec.Priority != nil {
+		if *spec.Priority <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("priority"), spec.Priority, "must be greater than 0"))
+		}
+		if *spec.Priority >=101 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("priority"), spec.Priority, "must be smaller than 101"))
+		}
+	}
 	return allErrs
 }
 

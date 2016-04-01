@@ -2106,6 +2106,13 @@ func DeepCopy_v1_PodSpec(in PodSpec, out *PodSpec, c *conversion.Cloner) error {
 	} else {
 		out.ImagePullSecrets = nil
 	}
+	if in.Priority != nil {
+		in, out := in.Priority, &out.Priority
+		*out = new(int64)
+		**out = *in
+	} else {
+		out.Priority = nil
+	}
 	return nil
 }
 

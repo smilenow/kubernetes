@@ -1490,6 +1490,11 @@ type PodSpec struct {
 	// in the case of docker, only DockerConfig type secrets are honored.
 	// More info: http://releases.k8s.io/HEAD/docs/user-guide/images.md#specifying-imagepullsecrets-on-a-pod
 	ImagePullSecrets []LocalObjectReference `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+
+	// Priority is a key for user to define a priority for pods
+	// Optional: Defaults for 1.
+	// It is a integer between [1,100], the bigger number means higher priority
+	Priority *int64 `json:"priority,omitempty"`
 }
 
 // PodSecurityContext holds pod-level security attributes and common container settings.

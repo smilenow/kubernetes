@@ -131,6 +131,10 @@ func addDefaultingFuncs(scheme *runtime.Scheme) {
 				period := int64(DefaultTerminationGracePeriodSeconds)
 				obj.TerminationGracePeriodSeconds = &period
 			}
+			if obj.Priority == nil {
+				minPriority := int64(1)
+				obj.Priority = &minPriority
+			}
 		},
 		func(obj *Probe) {
 			if obj.TimeoutSeconds == 0 {

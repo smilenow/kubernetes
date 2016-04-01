@@ -849,6 +849,12 @@ func autoConvert_api_PodSpec_To_v1_PodSpec(in *api.PodSpec, out *v1.PodSpec, s c
 	} else {
 		out.ImagePullSecrets = nil
 	}
+	if in.Priority != nil {
+		out.Priority = new(int64)
+		*out.Priority = *in.Priority
+	} else {
+		out.Priority = nil
+	}
 	return nil
 }
 
@@ -2150,6 +2156,12 @@ func autoConvert_v1_PodSpec_To_api_PodSpec(in *v1.PodSpec, out *api.PodSpec, s c
 		}
 	} else {
 		out.ImagePullSecrets = nil
+	}
+	if in.Priority != nil {
+		out.Priority = new(int64)
+		*out.Priority = *in.Priority
+	} else {
+		out.Priority = nil
 	}
 	return nil
 }
