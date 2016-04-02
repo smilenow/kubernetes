@@ -1086,6 +1086,7 @@ func describeJob(job *extensions.Job, events *api.EventList) (string, error) {
 	return tabbedString(func(out io.Writer) error {
 		fmt.Fprintf(out, "Name:\t%s\n", job.Name)
 		fmt.Fprintf(out, "Namespace:\t%s\n", job.Namespace)
+		fmt.Fprintf(out, "Priority:\t%v\n", *job.Spec.Priority)
 		fmt.Fprintf(out, "Image(s):\t%s\n", makeImageList(&job.Spec.Template.Spec))
 		selector, _ := unversioned.LabelSelectorAsSelector(job.Spec.Selector)
 		fmt.Fprintf(out, "Selector:\t%s\n", selector)
