@@ -347,6 +347,12 @@ func Convert_extensions_JobSpec_To_v1beta1_JobSpec(in *extensions.JobSpec, out *
 	} else {
 		out.ActiveDeadlineSeconds = nil
 	}
+	if in.Priority != nil {
+		out.Priority = new(int64)
+		*out.Priority = *in.Priority
+	} else {
+		out.Priority = nil
+	}
 	// unable to generate simple pointer conversion for unversioned.LabelSelector -> v1beta1.LabelSelector
 	if in.Selector != nil {
 		out.Selector = new(LabelSelector)
@@ -398,6 +404,12 @@ func Convert_v1beta1_JobSpec_To_extensions_JobSpec(in *JobSpec, out *extensions.
 		*out.ActiveDeadlineSeconds = *in.ActiveDeadlineSeconds
 	} else {
 		out.ActiveDeadlineSeconds = nil
+	}
+	if in.Priority != nil {
+		out.Priority = new(int64)
+		*out.Priority = *in.Priority
+	} else {
+		out.Priority = nil
 	}
 	// unable to generate simple pointer conversion for v1beta1.LabelSelector -> unversioned.LabelSelector
 	if in.Selector != nil {

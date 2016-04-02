@@ -561,6 +561,11 @@ type JobSpec struct {
 	// Template is the object that describes the pod that will be created when
 	// executing a job.
 	Template api.PodTemplateSpec `json:"template"`
+
+	// Priority is a key for user to define a priority for pods
+	// Optional: Defaults for 1.
+	// It is a integer between [1,100], the bigger number means higher priority
+	Priority *int64 `json:"priority,omitempty"`
 }
 
 // JobStatus represents the current state of a Job.

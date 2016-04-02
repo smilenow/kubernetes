@@ -91,6 +91,11 @@ type JobSpec struct {
 	// executing a job.
 	// More info: http://releases.k8s.io/HEAD/docs/user-guide/jobs.md
 	Template v1.PodTemplateSpec `json:"template"`
+
+	// Priority is a key for user to define a priority for pods
+	// Optional: Defaults for 1.
+	// It is a integer between [1,100], the bigger number means higher priority
+	Priority *int64 `json:"priority,omitempty"`
 }
 
 // JobStatus represents the current state of a Job.

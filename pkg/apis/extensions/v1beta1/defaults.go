@@ -111,6 +111,10 @@ func addDefaultingFuncs(scheme *runtime.Scheme) {
 				obj.Spec.Parallelism = new(int32)
 				*obj.Spec.Parallelism = 1
 			}
+			if obj.Spec.Priority == nil {
+				obj.Spec.Priority = new(int64)
+				*obj.Spec.Priority = 1
+			}
 		},
 		func(obj *HorizontalPodAutoscaler) {
 			if obj.Spec.MinReplicas == nil {

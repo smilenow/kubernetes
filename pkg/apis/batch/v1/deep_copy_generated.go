@@ -115,6 +115,13 @@ func DeepCopy_v1_JobSpec(in JobSpec, out *JobSpec, c *conversion.Cloner) error {
 	} else {
 		out.ActiveDeadlineSeconds = nil
 	}
+	if in.Priority != nil {
+		in, out := in.Priority, &out.Priority
+		*out = new(int64)
+		**out = *in
+	} else {
+		out.Priority = nil
+	}
 	if in.Selector != nil {
 		in, out := in.Selector, &out.Selector
 		*out = new(LabelSelector)

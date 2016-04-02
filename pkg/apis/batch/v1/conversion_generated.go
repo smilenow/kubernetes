@@ -2702,6 +2702,12 @@ func autoConvert_v1_JobSpec_To_extensions_JobSpec(in *JobSpec, out *extensions.J
 	if err := Convert_v1_PodTemplateSpec_To_api_PodTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
 	}
+	if in.Priority != nil {
+		out.Priority = new(int64)
+		*out.Priority = *in.Priority
+	} else {
+		out.Priority = nil
+	}
 	return nil
 }
 
@@ -2911,6 +2917,12 @@ func autoConvert_extensions_JobSpec_To_v1_JobSpec(in *extensions.JobSpec, out *J
 	}
 	if err := Convert_api_PodTemplateSpec_To_v1_PodTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
+	}
+	if in.Priority != nil {
+		out.Priority = new(int64)
+		*out.Priority = *in.Priority
+	} else {
+		out.Priority = nil
 	}
 	return nil
 }

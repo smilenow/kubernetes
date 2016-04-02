@@ -454,6 +454,14 @@ func ValidateJobSpec(spec *extensions.JobSpec, fldPath *field.Path) field.ErrorL
 	if spec.ActiveDeadlineSeconds != nil {
 		allErrs = append(allErrs, apivalidation.ValidateNonnegativeField(int64(*spec.ActiveDeadlineSeconds), fldPath.Child("activeDeadlineSeconds"))...)
 	}
+	if spec.Priority != nil {
+		if *spec.Priority <=0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("priority"), spec.Priority, "must be greater than 0"))
+		}
+		if *spec.Priority >=101 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("priority"), spec.Priority, "must be smaller than 101"))
+		}
+	}
 	if spec.Selector == nil {
 		allErrs = append(allErrs, field.Required(fldPath.Child("selector"), ""))
 	} else {
