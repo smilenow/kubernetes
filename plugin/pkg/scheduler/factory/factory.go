@@ -53,7 +53,7 @@ const (
 type ConfigFactory struct {
 	Client *client.Client
 	// queue for pods that need scheduling
-	PodQueue *cache.FIFO
+	PodQueue *cache.PQ
 	// a means to list all known scheduled pods.
 	ScheduledPodLister *cache.StoreToPodLister
 	// a means to list all known scheduled pods and pods assumed to have been scheduled.
@@ -90,7 +90,7 @@ func NewConfigFactory(client *client.Client, schedulerName string) *ConfigFactor
 
 	c := &ConfigFactory{
 		Client:             client,
-		PodQueue:           cache.NewFIFO(cache.MetaNamespaceKeyFunc),
+		PodQueue:           cache.NewPQ(cache.MetaNamespaceKeyFunc),
 		ScheduledPodLister: &cache.StoreToPodLister{},
 		// Only nodes in the "Ready" condition with status == "True" are schedulable
 		NodeLister:       &cache.StoreToNodeLister{Store: cache.NewStore(cache.MetaNamespaceKeyFunc)},
@@ -379,7 +379,7 @@ func (factory *ConfigFactory) createReplicaSetLW() *cache.ListWatch {
 	return cache.NewListWatchFromClient(factory.Client.ExtensionsClient, "replicasets", api.NamespaceAll, fields.ParseSelectorOrDie(""))
 }
 
-func (factory *ConfigFactory) makeDefaultErrorFunc(backoff *podBackoff, podQueue *cache.FIFO) func(pod *api.Pod, err error) {
+func (factory *ConfigFactory) makeDefaultErrorFunc(backoff *podBackoff, podQueue *cache.PQ) func(pod *api.Pod, err error) {
 	return func(pod *api.Pod, err error) {
 		if err == scheduler.ErrNoNodesAvailable {
 			glog.V(4).Infof("Unable to schedule %v %v: no nodes are registered to the cluster; waiting", pod.Namespace, pod.Name)

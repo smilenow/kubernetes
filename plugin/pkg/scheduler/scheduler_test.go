@@ -196,7 +196,7 @@ func TestSchedulerForgetAssumedPodAfterDelete(t *testing.T) {
 	// - queuedPodStore: pods queued before processing
 	// - scheduledPodStore: pods that has a scheduling decision
 	scheduledPodStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	queuedPodStore := cache.NewFIFO(cache.MetaNamespaceKeyFunc)
+	queuedPodStore := cache.NewPQ(cache.MetaNamespaceKeyFunc)
 
 	// Port is the easiest way to cause a fit predicate failure
 	podPort := 8080

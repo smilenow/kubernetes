@@ -153,7 +153,7 @@ func TestDefaultErrorFunc(t *testing.T) {
 	// TODO: Uncomment when fix #19254
 	// defer server.Close()
 	factory := NewConfigFactory(client.NewOrDie(&restclient.Config{Host: server.URL, ContentConfig: restclient.ContentConfig{GroupVersion: testapi.Default.GroupVersion()}}), api.DefaultSchedulerName)
-	queue := cache.NewFIFO(cache.MetaNamespaceKeyFunc)
+	queue := cache.NewPQ(cache.MetaNamespaceKeyFunc)
 	podBackoff := podBackoff{
 		perPodBackoff:   map[types.NamespacedName]*backoffEntry{},
 		clock:           &fakeClock{},
