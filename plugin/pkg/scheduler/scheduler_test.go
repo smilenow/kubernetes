@@ -69,6 +69,29 @@ func (es mockScheduler) Schedule(pod *api.Pod, ml algorithm.NodeLister) (string,
 	return es.machine, es.err
 }
 
+type mockSchedulerRelaxedRandomization struct {
+	machine string
+	err     error
+}
+
+func (es mockSchedulerRelaxedRandomization) Schedule(pod *api.Pod, ml algorithm.NodeLister) (string, error) {
+	nodes, err := ml.List()
+	if err != nil {
+		return "", err
+	}
+	/*
+	for _, now := range nodes.Items {
+		fmt.Printf("%v\n", now.Name)
+	}
+	*/
+	for _, now := range nodes.Items {
+		if now.Name == es.machine {
+			return es.machine, es.err
+		}
+	}
+	return "", nil
+}
+
 func TestScheduler(t *testing.T) {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(t.Logf).Stop()
@@ -322,4 +345,189 @@ func TestSchedulerForgetAssumedPodAfterDelete(t *testing.T) {
 	}
 	<-called
 	events.Stop()
+}
+
+// Random 2 machines for 1 pod from 4 machines, and when machine1 in this
+// two machines, then it can pass the test, if not, it will fails.
+// So the rate of passing this unit test is 50%
+func TestSchedulerOneRelaxedRandomization(t *testing.T) {
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(t.Logf).Stop()
+	errS := errors.New("scheduler")
+	errB := errors.New("binder")
+
+	table := []struct {
+		injectBindError  error
+		sendPod          *api.Pod
+		algo             algorithm.ScheduleAlgorithm
+		expectErrorPod   *api.Pod
+		expectAssumedPod *api.Pod
+		expectError      error
+		expectBind       *api.Binding
+		eventReason      string
+	}{
+		{
+			sendPod:          podWithID("foo", ""),
+			algo:             mockSchedulerRelaxedRandomization{"machine1", nil},
+			expectBind:       &api.Binding{ObjectMeta: api.ObjectMeta{Name: "foo"}, Target: api.ObjectReference{Kind: "Node", Name: "machine1"}},
+			expectAssumedPod: podWithID("foo", "machine1"),
+			eventReason:      "Scheduled",
+		}, {
+			sendPod:        podWithID("foo", ""),
+			algo:           mockScheduler{"machine1", errS},
+			expectError:    errS,
+			expectErrorPod: podWithID("foo", ""),
+			eventReason:    "FailedScheduling",
+		}, {
+			sendPod:         podWithID("foo", ""),
+			algo:            mockScheduler{"machine1", nil},
+			expectBind:      &api.Binding{ObjectMeta: api.ObjectMeta{Name: "foo"}, Target: api.ObjectReference{Kind: "Node", Name: "machine1"}},
+			injectBindError: errB,
+			expectError:     errB,
+			expectErrorPod:  podWithID("foo", ""),
+			eventReason:     "FailedScheduling",
+		},
+	}
+
+	for i, item := range table {
+		var gotError error
+		var gotPod *api.Pod
+		var gotAssumedPod *api.Pod
+		var gotBinding *api.Binding
+		c := &Config{
+			SchedulerCache: &schedulertesting.FakeCache{
+				AssumeFunc: func(pod *api.Pod) {
+					gotAssumedPod = pod
+				},
+			},
+			NodeLister: algorithm.FakeNodeLister(
+				api.NodeList{Items: []api.Node{
+					{ObjectMeta: api.ObjectMeta{Name: "machine1"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine2"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine3"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine4"}},
+				}},
+			),
+			Algorithm: item.algo,
+			Binder: fakeBinder{func(b *api.Binding) error {
+				gotBinding = b
+				return item.injectBindError
+			}},
+			Error: func(p *api.Pod, err error) {
+				gotPod = p
+				gotError = err
+			},
+			NextPod: func() *api.Pod {
+				return item.sendPod
+			},
+			Recorder: eventBroadcaster.NewRecorder(api.EventSource{Component: "scheduler"}),
+		}
+		s := New(c)
+		called := make(chan struct{})
+		events := eventBroadcaster.StartEventWatcher(func(e *api.Event) {
+			if e, a := item.eventReason, e.Reason; e != a {
+				t.Errorf("%v: expected %v, got %v", i, e, a)
+			}
+			close(called)
+		})
+		s.scheduleOne_relaxed_randomization()
+		if e, a := item.expectAssumedPod, gotAssumedPod; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: assumed pod: wanted %v, got %v", i, e, a)
+		}
+		if e, a := item.expectErrorPod, gotPod; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: error pod: wanted %v, got %v", i, e, a)
+		}
+		if e, a := item.expectError, gotError; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: error: wanted %v, got %v", i, e, a)
+		}
+		if e, a := item.expectBind, gotBinding; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: error: %s", i, diff.ObjectDiff(e, a))
+		}
+		<-called
+		events.Stop()
+	}
+}
+
+// Random 6 machines for 3 pods from 4 machines, and when machine1 in this
+// 6 machines, then it can pass the test, if not, it will fails.
+// So the rate of passing this unit test is 50%
+func TestSchedulerBatchRelaxedRandomization(t *testing.T) {
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(t.Logf).Stop()
+
+	table := []struct {
+		injectBindError  error
+		sendPod          *api.Pod
+		algo             algorithm.ScheduleAlgorithm
+		expectErrorPod   *api.Pod
+		expectAssumedPod *api.Pod
+		expectError      error
+		expectBind       *api.Binding
+		eventReason      string
+	}{
+		{
+			sendPod:          podWithID("foo", ""),
+			algo:             mockSchedulerRelaxedRandomization{"machine1", nil},
+			expectBind:       &api.Binding{ObjectMeta: api.ObjectMeta{Name: "foo"}, Target: api.ObjectReference{Kind: "Node", Name: "machine1"}},
+			expectAssumedPod: podWithID("foo", "machine1"),
+			eventReason:      "Scheduled",
+		},
+	}
+
+	for i, item := range table {
+		var gotError error
+		var gotPod *api.Pod
+		var gotAssumedPod *api.Pod
+		var gotBinding *api.Binding
+		c := &Config{
+			SchedulerCache: &schedulertesting.FakeCache{
+				AssumeFunc: func(pod *api.Pod) {
+					gotAssumedPod = pod
+				},
+			},
+			NodeLister: algorithm.FakeNodeLister(
+				api.NodeList{Items: []api.Node{
+					{ObjectMeta: api.ObjectMeta{Name: "machine1"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine2"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine3"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine4"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine5"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine6"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine7"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine8"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine9"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine10"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine11"}},
+					{ObjectMeta: api.ObjectMeta{Name: "machine12"}},
+				}},
+			),
+			Algorithm: item.algo,
+			Binder: fakeBinder{func(b *api.Binding) error {
+				gotBinding = b
+				return item.injectBindError
+			}},
+			Error: func(p *api.Pod, err error) {
+				gotPod = p
+				gotError = err
+			},
+			NextPod: func() *api.Pod {
+				return item.sendPod
+			},
+			Recorder: eventBroadcaster.NewRecorder(api.EventSource{Component: "scheduler"}),
+		}
+		s := New(c)
+		s.scheduleBatch_relaxed_randomization()
+		if e, a := item.expectAssumedPod, gotAssumedPod; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: assumed pod: wanted %v, got %v", i, e, a)
+		}
+		if e, a := item.expectErrorPod, gotPod; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: error pod: wanted %v, got %v", i, e, a)
+		}
+		if e, a := item.expectError, gotError; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: error: wanted %v, got %v", i, e, a)
+		}
+		if e, a := item.expectBind, gotBinding; !reflect.DeepEqual(e, a) {
+			t.Errorf("%v: error: %s", i, diff.ObjectDiff(e, a))
+		}
+	}
 }
