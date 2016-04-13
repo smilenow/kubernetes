@@ -80,9 +80,9 @@ func New(c *Config) *Scheduler {
 
 // Run begins watching and scheduling. It starts a goroutine and returns immediately.
 func (s *Scheduler) Run() {
-	go wait.Until(s.scheduleOne, 0, s.config.StopEverything)
-//	go wait.Until(s.scheduleOne_relaxed_randomization(), 0, s.config.StopEverything)
-//	go wait.Until(s.scheduleBatch_relaxed_randomization(), 0, s.config.StopEverything)
+//	go wait.Until(s.scheduleOne, 0, s.config.StopEverything)
+	go wait.Until(s.scheduleOne_relaxed_randomization, 0, s.config.StopEverything)
+//	go wait.Until(s.scheduleBatch_relaxed_randomization, 0, s.config.StopEverything)
 }
 
 func (s *Scheduler) scheduleOne() {
