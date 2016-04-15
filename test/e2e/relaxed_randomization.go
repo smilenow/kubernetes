@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"fmt"
-	"time"
 	"strconv"
 
 	client "k8s.io/kubernetes/pkg/client/unversioned"
@@ -81,9 +80,6 @@ var _ = KubeDescribe("Graduation Relaxed Randomization", func(){
 			}
 		}
 
-		By("sleep 5 mins")
-		time.Sleep(5 * time.Minute)
-
 		By("waiting for all pods scheduled")
 		selector := labels.SelectorFromSet(labels.Set(map[string]string{"name": testRelaxedRandomization}))
 		_, err = waitForPodsWithLabelScheduled(c, ns, selector)
@@ -99,7 +95,7 @@ var _ = KubeDescribe("Graduation Relaxed Randomization", func(){
 		Expect(len(podList.Items)).To(Equal(podNumber))
 
 		By("print Pods status")
-		for i := 0; i < len(podList.Items); i++ {
+		for i := 0; i < 20; i++ {
 			Logf("Pod %d : %v \n", i, podList.Items[i])
 		}
 		Logf("printed")
