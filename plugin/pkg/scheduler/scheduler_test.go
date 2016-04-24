@@ -448,7 +448,7 @@ func TestSchedulerOneRelaxedRandomization(t *testing.T) {
 	}
 }
 
-// Random 6 machines for 3 pods from 4 machines, and when machine1 in this
+// Random 6 machines for 3 pods from 12 machines, and when machine1 in this
 // 6 machines, then it can pass the test, if not, it will fails.
 // So the rate of passing this unit test is 50%
 func TestSchedulerBatchRelaxedRandomization(t *testing.T) {
