@@ -17,8 +17,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const testRelaxedRandomization = "test-relaxed-randomization"
-
 var _ = KubeDescribe("Graduation Project Batch Relaxed Randomization", func(){
 	framework := NewDefaultFramework("graduation-relaxed-randomization")
 	var c *client.Client
@@ -37,8 +35,8 @@ var _ = KubeDescribe("Graduation Project Batch Relaxed Randomization", func(){
 
 		By("creating the nodes")
 		for i := 0; i < nodeNumber; i++ {
-			node := createNode(i)
-			nodeName := createNodeName(i)
+			node := createBatchNode(i)
+			nodeName := createBatchNodeName(i)
 			_, err := c.Nodes().Create(node)
 			expectNoError(err, "Error creating for %v node", nodeName)
 			Logf("creating node %v successfully", i)
@@ -56,7 +54,7 @@ var _ = KubeDescribe("Graduation Project Batch Relaxed Randomization", func(){
 
 			By("deleting the nodes")
 			for i := 0; i < nodeNumber; i++ {
-				nodeName := createNodeName(i)
+				nodeName := createBatchNodeName(i)
 				err := c.Nodes().Delete(nodeName)
 				expectNoError(err, "Error deleting for %v node", nodeName)
 				Logf("deleting node %v successfully", i)
@@ -75,7 +73,7 @@ var _ = KubeDescribe("Graduation Project Batch Relaxed Randomization", func(){
 
 		By(fmt.Sprintf("submitting %v pods to kubernetes", podNumber))
 		for i := 0; i < podNumber; i++ {
-			pods[i], err = c.Pods(ns).Create(createTestPod())
+			pods[i], err = c.Pods(ns).Create(createTestBatchPod())
 			if err != nil {
 				Failf("Failed to create %d pod: %v", i, err)
 			}
@@ -107,12 +105,12 @@ var _ = KubeDescribe("Graduation Project Batch Relaxed Randomization", func(){
 
 })
 
-func createNodeName(i int) string {
+func createBatchNodeName(i int) string {
 	return "node-relaxed-randomization-test-node-" + strconv.Itoa(i)
 }
 
-func createNode(i int) *api.Node {
-	nodeName := createNodeName(i)
+func createBatchNode(i int) *api.Node {
+	nodeName := createBatchNodeName(i)
 
 	return &api.Node{
 		ObjectMeta: api.ObjectMeta {
@@ -143,7 +141,7 @@ func createNode(i int) *api.Node {
 }
 
 
-func createTestPod() *api.Pod {
+func createTestBatchPod() *api.Pod {
 	podName := "pod-relaxed-randomization-" + string(util.NewUUID())
 
 	return &api.Pod{
