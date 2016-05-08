@@ -206,14 +206,11 @@ func (s *Scheduler) scheduleBatch_relaxed_randomization() {
 	if err != nil {
 		return
 	}
-	exists := map[int]bool{}
-	randomNum := make([]int, relaxedRandomizationBatch)
 	randomNodes := []api.Node{}
 	if len(nodes.Items) > relaxedRandomizationBatch {
-		for i := 0; i < relaxedRandomizationBatch; i++ {
-			randomNum[i] = scheduleRandomOne(len(nodes.Items), exists)
-			exists[randomNum[i]] = true
-			randomNodes = append(randomNodes, nodes.Items[randomNum[i]])
+		randomNum := schedulerRandomBatch(len(nodes.Items), relaxedRandomizationBatch)
+		for _, i := range randomNum {
+			randomNodes = append(randomNodes, nodes.Items[i])
 		}
 	} else {
 		randomNodes = nodes.Items
@@ -276,4 +273,21 @@ func scheduleRandomOne(n int, exists map[int]bool) (int) {
 		}
 	}
 	return 0
+}
+
+func schedulerRandomBatch(n, m int) ([]int) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	cur := make([]int, n)
+	for i := 0; i < n; i++ {
+		cur[i] = i
+	}
+	ret := make([]int, m)
+	randN := n;
+	for i := 0; i < m; i++ {
+		randNow := r.Intn(randN)
+		ret[i] = cur[randNow]
+		randN--
+		cur[randNow] = cur[randN]
+	}
+	return ret
 }
